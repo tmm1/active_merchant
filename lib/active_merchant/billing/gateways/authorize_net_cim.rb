@@ -649,18 +649,37 @@ module ActiveMerchant #:nodoc:
         test_mode = test? || message =~ /Test Mode/
         success = response_params['messages']['result_code'] == 'Ok'
 
-        response = Response.new(success, message, response_params,
-          :test => test_mode,
-          :authorization => response_params['customer_profile_id'] || (response_params['profile'] ? response_params['profile']['customer_profile_id'] : nil)
-        )
-        
-        response.params['direct_response'] = parse_direct_response(response) if response.params['direct_response']
+        is_transaction = false
+        tx_details = nil
+
+        %w[ direct_response validation_direct_response ].each do |key|
+          if response_params.has_key?(key)
+            tx_details = response_params[key] = parse_direct_response(response_params,key)
+            is_transaction = true
+          end
+        end
+
+        unless is_transaction
+          response = Response.new(success, message, response_params,
+            :test => test_mode,
+            :authorization => response_params['customer_profile_id'] || (response_params['profile'] ? response_params['profile']['customer_profile_id'] : nil)
+          )
+        else
+          response = Response.new(tx_details['response_code']=='1', message, response_params,
+            :test => test_mode,
+            :authorization => tx_details['transaction_id'],
+            :fraud_review => tx_details['response_code']=='4',
+            :avs_result => { :code => tx_details['avs_response'] },
+            :cvv_result => tx_details['card_code']
+          )
+        end
+
         response
       end
       
-      def parse_direct_response(response)
-        direct_response = {'raw' => response.params['direct_response']}
-        direct_response_fields = response.params['direct_response'].split(',')
+      def parse_direct_response(params, key)
+        direct_response = {'raw' => params[key]}
+        direct_response_fields = params[key].split(',')
 
         direct_response.merge(
           {
