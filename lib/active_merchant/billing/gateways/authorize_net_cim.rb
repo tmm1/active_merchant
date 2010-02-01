@@ -48,7 +48,8 @@ module ActiveMerchant #:nodoc:
         :update_customer_payment_profile => 'updateCustomerPaymentProfile',
         :update_customer_shipping_address => 'updateCustomerShippingAddress',
         :create_customer_profile_transaction => 'createCustomerProfileTransaction',
-        :validate_customer_payment_profile => 'validateCustomerPaymentProfile'
+        :validate_customer_payment_profile => 'validateCustomerPaymentProfile',
+        :get_customer_profile_ids => 'getCustomerProfileIds'
       }
       
       CIM_TRANSACTION_TYPES = {
@@ -94,6 +95,13 @@ module ActiveMerchant #:nodoc:
         requires!(options, :login, :password)
         @options = options
         super
+      end
+
+      # Get a list of customer ids
+      #
+      def get_customer_profile_ids
+        request = build_request(:get_customer_profile_ids)
+        commit(:get_customer_profile_ids, request)
       end
 
       # Creates a new customer profile along with any customer payment profiles and customer shipping addresses
@@ -367,7 +375,9 @@ module ActiveMerchant #:nodoc:
           xml.tag!('transactionKey', @options[:password])
         end
       end
-      
+
+      def build_get_customer_profile_ids_request(xml, options) end
+
       def build_create_customer_profile_request(xml, options)
         add_profile(xml, options[:profile])
 
