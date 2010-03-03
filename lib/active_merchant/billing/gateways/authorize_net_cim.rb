@@ -514,7 +514,7 @@ module ActiveMerchant #:nodoc:
         xml.tag!('transaction') do
           xml.tag!(CIM_TRANSACTION_TYPES[transaction[:type]]) do
             # The amount to be billed to the customer
-            xml.tag!('amount', transaction[:amount])
+            xml.tag!('amount', transaction[:amount]) unless transaction[:type] == :void
             xml.tag!('customerProfileId', transaction[:customer_profile_id])
             xml.tag!('customerPaymentProfileId', transaction[:customer_payment_profile_id])
             xml.tag!('approvalCode', transaction[:approval_code]) if transaction[:type] == :capture_only
